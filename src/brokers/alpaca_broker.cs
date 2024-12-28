@@ -1,4 +1,5 @@
 ﻿using Alpaca.Markets;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,19 +10,20 @@ namespace soad_csharp.brokers
     public class alpaca_broker : IBroker
     {
         // Replace these with your Alpaca API credentials
-        private const string ApiKey = "YOUR_API_KEY";
-        private const string ApiSecret = "YOUR_API_SECRET";
-
+  
         private readonly IAlpacaTradingClient _tradingClient;
         private readonly IAlpacaDataClient _dataClient;
 
-        public alpaca_broker()
+        public alpaca_broker(IConfiguration _configuration  )
         {
+            var AlpacaApiKey = _configuration["Alpaca:ApiKey"];
+            var AlpacaApiSecret = _configuration["Alpaca:ApiSecret"];
+
             // Initialize Alpaca trading client
-            _tradingClient = Environments.Paper.GetAlpacaTradingClient(new SecretKey(ApiKey, ApiSecret));
+            _tradingClient = Environments.Paper.GetAlpacaTradingClient(new SecretKey(AlpacaApiKey, AlpacaApiSecret));
 
             // Initialize Alpaca data client
-            _dataClient = Environments.Paper.GetAlpacaDataClient(new SecretKey(ApiKey, ApiSecret));
+            _dataClient = Environments.Paper.GetAlpacaDataClient(new SecretKey(AlpacaApiKey, AlpacaApiSecret));
         }
 
         public void Connect()
