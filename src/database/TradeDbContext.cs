@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
  
-
+namespace soad_csharp.database;
 public class Trade
 {
     public int Id { get; set; }
