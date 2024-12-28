@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35617.110 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "soad-csharp", "soad-csharp.csproj", "{1EC0559E-04ED-46E9-AE47-D3F5FE45FFDB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1EC0559E-04ED-46E9-AE47-D3F5FE45FFDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EC0559E-04ED-46E9-AE47-D3F5FE45FFDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1EC0559E-04ED-46E9-AE47-D3F5FE45FFDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1EC0559E-04ED-46E9-AE47-D3F5FE45FFDB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D8C70590-7E5A-4902-B954-ADD5B2330D91}
+	EndGlobalSection
+EndGlobal
