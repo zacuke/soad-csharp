@@ -1,5 +1,7 @@
 ﻿using Alpaca.Markets;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using soad_csharp.database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,23 +9,22 @@ using System.Threading.Tasks;
 
 namespace soad_csharp.brokers
 {
-    public class alpaca_broker : IBroker
+    public class AlpacaBroker : IBroker
     {
         // Replace these with your Alpaca API credentials
   
         private readonly IAlpacaTradingClient _tradingClient;
         private readonly IAlpacaDataClient _dataClient;
-
-        public alpaca_broker(IConfiguration _configuration  )
+        private readonly IAlpacaCryptoDataClient _cryptoDataClient;
+        public AlpacaBroker(string apiKey, string apiSecret)
         {
-            var AlpacaApiKey = _configuration["Alpaca:ApiKey"];
-            var AlpacaApiSecret = _configuration["Alpaca:ApiSecret"];
+            //var AlpacaApiKey = _configuration["Alpaca:ApiKey"];
+            //var AlpacaApiSecret = _configuration["Alpaca:ApiSecret"];
+            var secretKey = new SecretKey(apiKey, apiSecret);
 
-            // Initialize Alpaca trading client
-            _tradingClient = Environments.Paper.GetAlpacaTradingClient(new SecretKey(AlpacaApiKey, AlpacaApiSecret));
-
-            // Initialize Alpaca data client
-            _dataClient = Environments.Paper.GetAlpacaDataClient(new SecretKey(AlpacaApiKey, AlpacaApiSecret));
+            _tradingClient = Environments.Paper.GetAlpacaTradingClient(secretKey);
+            _dataClient = Environments.Paper.GetAlpacaDataClient(secretKey);
+            _cryptoDataClient = Environments.Paper.GetAlpacaCryptoDataClient(secretKey);
         }
 
         public void Connect()
@@ -31,21 +32,52 @@ namespace soad_csharp.brokers
             // Connection is implicit using the Alpaca clients with valid credentials
         }
 
-        public async Task<decimal?> GetCurrentPriceAsync(string symbol)
+        public async Task<decimal?> GetCurrentPriceAsync(string symbol, AssetType assetType)
         {
-            var bar = await _dataClient.GetLatestBarAsync(new LatestMarketDataRequest(symbol));
+            IBar bar;
+            switch(assetType)
+            {
+                case AssetType.Stock:
+                    bar = await _dataClient.GetLatestBarAsync(new LatestMarketDataRequest(symbol));
+                    break;
+                case AssetType.Crypto:
+                    var bars = await _cryptoDataClient.ListLatestBarsAsync(new LatestDataListRequest([symbol]));
+                    bar = bars.FirstOrDefault().Value;
+                    break;
+                default:
+                    throw new ArgumentException("Invalid asset type");
+            }
             return bar?.Close;
         }
 
-        public async Task<BidAsk> GetBidAskAsync(string symbol)
+        public async Task<BidAsk> GetBidAskAsync(string symbol, AssetType assetType)
         {
-            // Wrap async call into a sync context for easier use
-            var quote = await _dataClient.GetLatestQuoteAsync(new LatestMarketDataRequest(symbol)) ;
+            IQuote quote;
+            switch (assetType)
+            {
+                case AssetType.Stock:
+                    quote = await _dataClient.GetLatestQuoteAsync(new LatestMarketDataRequest(symbol));
+                    break;
+                case AssetType.Crypto:
+                    var quotes = await _cryptoDataClient.ListLatestQuotesAsync(new LatestDataListRequest([symbol]));
+                    quote = quotes.FirstOrDefault().Value;
+                    break;
+                default:
+                    throw new ArgumentException("Invalid asset type");
+            }
+
             return new BidAsk
             {
                 BidPrice = quote?.BidPrice,
                 AskPrice = quote?.AskPrice
             };
+
+            //var quote = await _dataClient.GetLatestQuoteAsync(new LatestMarketDataRequest(symbol)) ;
+            //return new BidAsk
+            //{
+            //    BidPrice = quote?.BidPrice,
+            //    AskPrice = quote?.AskPrice
+            //};
         }
 
         public async Task<AccountInfo> GetAccountInfoAsync()
@@ -63,14 +95,21 @@ namespace soad_csharp.brokers
         public async Task<List<Position>> GetPositionsAsync()
         {
             var positions = await _tradingClient.ListPositionsAsync();
-            return positions.Select(position => new Position
+            return [.. positions.Select(position => new Position
             {
                 Symbol = position.Symbol,
                 Quantity = position.Quantity,
-                MarketValue = position.MarketValue ?? 0
-            }).ToList();
-        }
+                MarketValue = position.MarketValue ?? throw new Exception("null marketvalue unexpected"),
+                AssetType = position.AssetClass switch
+                {
+                    AssetClass.Crypto => AssetType.Crypto,
+                    AssetClass.UsEquity => AssetType.Stock,
+                    AssetClass.UsOption => AssetType.Option,
+                    _ => throw new ArgumentException("Invalid asset type") 
 
+                }
+            })];
+        }
         public async Task<OrderResponse> PlaceOrderAsync(
             string symbol,
             int quantity,
@@ -79,12 +118,13 @@ namespace soad_csharp.brokers
             string orderType = "limit",
             string timeInForce = "day")
         {
-            var orderSide = side.ToLower() == "buy" ? OrderSide.Buy : OrderSide.Sell;
-            var tif = timeInForce.ToLower() == "day" ? TimeInForce.Day : TimeInForce.Gtc;
+            Enum.TryParse(side, true, out OrderSide orderSide);
+            Enum.TryParse(timeInForce, true, out TimeInForce tif);
+            Enum.TryParse(orderType, true, out OrderType parsedOrderType);
 
             var orderRequest = new NewOrderRequest(
                 symbol, quantity, orderSide,
-                orderType.ToLower() == "market" ? OrderType.Market : OrderType.Limit,
+                parsedOrderType,
                 tif)
             {
                 LimitPrice = price

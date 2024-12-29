@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
- 
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace soad_csharp.database;
 public class Trade
 {
@@ -32,6 +33,7 @@ public class Balance
     public string Broker { get; set; }
     public string Strategy { get; set; }
     public string Type { get; set; } // 'Cash' or 'Positions'
+    
     public float BalanceValue { get; set; } = 0.0F; // Renamed to avoid conflict with class name
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
@@ -57,14 +59,12 @@ public class Position
     public Balance Balance { get; set; }
 }
 
-public class AppDbContext : DbContext
+public class TradeDbContext(DbContextOptions<TradeDbContext> options) : DbContext(options)
 {
     public DbSet<Trade> Trades { get; set; }
     public DbSet<AccountInfo> AccountInfos { get; set; }
     public DbSet<Balance> Balances { get; set; }
     public DbSet<Position> Positions { get; set; }
-
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -97,10 +97,10 @@ public class AppDbContext : DbContext
             entity.Property(b => b.Broker).IsRequired();
             entity.Property(b => b.Type).IsRequired();
             entity.Property(b => b.Timestamp);//.HasDefaultValue("GETUTCDATE()");
-
+            entity.Property(entity => entity.BalanceValue).HasColumnName("Balance"); // Rename column
             // Create indexes
             //entity.HasIndex(b => new { b.Broker, b.Strategy, b.Timestamp }).HasDatabaseName("ix_broker_strategy_timestamp");
-          //  entity.HasIndex(b => new { b.Type, b.Timestamp }).HasDatabaseName("ix_type_timestamp");
+            //  entity.HasIndex(b => new { b.Type, b.Timestamp }).HasDatabaseName("ix_type_timestamp");
         });
 
         // Position entity configuration
@@ -110,9 +110,12 @@ public class AppDbContext : DbContext
             entity.Property(p => p.Broker).IsRequired();
             entity.Property(p => p.Symbol).IsRequired();
             entity.Property(p => p.Quantity).IsRequired();
-            entity.Property(p => p.LatestPrice).IsRequired();
-            entity.Property(p => p.LastUpdated);//.HasDefaultValue("GETUTCDATE()");
-
+            entity.Property(p => p.LatestPrice).IsRequired().HasColumnName("Latest_Price");
+            entity.Property(p => p.UnderlyingLatestPrice).HasColumnName("Underlying_Latest_Price");
+            entity.Property(p => p.UnderlyingVolatility).HasColumnName("Underlying_Volatility");
+            entity.Property(p => p.LastUpdated).HasColumnName("Last_Updated");//.HasDefaultValue("GETUTCDATE()");
+            entity.Property(p => p.BalanceId).HasColumnName("Balance_Id");
+            entity.Property(p => p.CostBasis).HasColumnName("Cost_Basis");
             // Relationship with Balance
             entity.HasOne(p => p.Balance)
                   .WithMany(b => b.Positions)

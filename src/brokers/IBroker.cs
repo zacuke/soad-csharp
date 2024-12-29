@@ -7,19 +7,19 @@ using System.Threading.Tasks;
 
 namespace soad_csharp.brokers;
 
-interface IBroker
+public interface IBroker
 {
     // Establishes a connection
     void Connect();
 
     // Retrieves account information
-    Task<AccountInfo> GetAccountInfoAsync();
+    public Task<AccountInfo> GetAccountInfoAsync();
 
     // Retrieves positions for the account
-    Task<List<Position>> GetPositionsAsync();
+    public Task<List<Position>> GetPositionsAsync();
 
     // Places a stock order
-    Task<OrderResponse> PlaceOrderAsync(
+    public Task<OrderResponse> PlaceOrderAsync(
         string symbol,
         int quantity,
         string side,
@@ -28,7 +28,7 @@ interface IBroker
         string timeInForce = "day");
 
     // Places an option order
-    Task<OrderResponse> PlaceOptionOrderAsync(
+    public Task<OrderResponse> PlaceOptionOrderAsync(
         string symbol,
         int quantity,
         string side,
@@ -40,16 +40,16 @@ interface IBroker
         string timeInForce = "day");
 
     // Retrieves the status of an order
-    Task<OrderStatus> GetOrderStatusAsync(string orderId);
+    public Task<OrderStatus> GetOrderStatusAsync(string orderId);
 
     // Cancels an order
-    Task<CancelOrderResponse> CancelOrderAsync(string orderId);
+    public Task<CancelOrderResponse> CancelOrderAsync(string orderId);
 
     // Retrieves the current price of a symbol (async)
-    Task<decimal?> GetCurrentPriceAsync(string symbol);
+    public Task<decimal?> GetCurrentPriceAsync(string symbol, AssetType assetType);
 
     // Retrieves the bid and ask prices of a symbol
-    Task<BidAsk> GetBidAskAsync(string symbol);
+    public Task<BidAsk> GetBidAskAsync(string symbol, AssetType assetType);
 
 }
 
@@ -100,4 +100,19 @@ public class Position
     public string Symbol { get; set; }
     public decimal Quantity { get; set; }
     public decimal MarketValue { get; set; }
+    public AssetType AssetType { get; set; }
+}
+public enum AssetType
+{
+    Stock,
+    Option,
+    Crypto
+}
+
+
+public class AssetAllocation
+{
+    public string Name { get; set; }
+    public decimal Allocation { get; set; }
+    public AssetType Type { get; set; }  
 }
