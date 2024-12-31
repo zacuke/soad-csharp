@@ -14,9 +14,11 @@ var builder = Host.CreateApplicationBuilder(args);
 
 builder.Configuration.AddJsonFile("appsettings.json").AddUserSecrets<Program>();
 builder.Logging.AddSimpleConsole();
+var connectionString = builder.Configuration.GetConnectionString("TradeDb");
+
 builder.Services.AddDbContext<TradeDbContext>(options =>
 {
-    options.UseSqlite("Data Source=c:\\src\\soad\\default_trading_system.db");
+    options.UseSqlite(connectionString);
 });
 
 //log httpclient requests
