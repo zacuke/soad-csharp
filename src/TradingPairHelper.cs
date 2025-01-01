@@ -1,4 +1,5 @@
-﻿using System;
+﻿using soad_csharp.brokers;
+using System;
 using System.Collections.Generic;
 namespace soad_csharp;
 
@@ -66,5 +67,37 @@ public static class TradingPairHelper
         }
 
         throw new ArgumentOutOfRangeException(nameof(pair), $"The trading pair '{pair}' does not have a slashed mapping.");
+    }
+
+    public static BrokerPosition GetBrokerPositionsWhere(this List<BrokerPosition> brokerPositions, string symbol)
+    {
+        // Try to normalize the symbol only if it's part of the enum
+        string normalizedSymbol = symbol;
+        TradingPair tradingPair;
+
+        if (Enum.TryParse<TradingPair>(symbol.Replace("/", "").ToUpperInvariant(), true, out tradingPair))
+        {
+            // If the symbol can be translated into a TradingPair enum:
+            normalizedSymbol = tradingPair.ToString();
+        }
+
+        // Convert normalized symbol to both slashed and unslashed formats
+        string slashedFormat = null;
+        string unslashedFormat = normalizedSymbol;
+
+        if (Enum.TryParse<TradingPair>(normalizedSymbol, true, out tradingPair))
+        {
+            slashedFormat = GetSlashedFormat(tradingPair);
+        }
+
+        // Search for matches in brokerPositions
+        var result =  brokerPositions.FirstOrDefault(bp =>
+            string.Equals(bp.Symbol, slashedFormat, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(bp.Symbol, unslashedFormat, StringComparison.OrdinalIgnoreCase));
+
+        if (result == null)
+            throw new ArgumentOutOfRangeException(nameof(symbol));
+
+        return result;
     }
 }

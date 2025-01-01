@@ -32,7 +32,7 @@ namespace soad_csharp.brokers
             // Connection is implicit using the Alpaca clients with valid credentials
         }
 
-        public async Task<decimal?> GetCurrentPriceAsync(string symbol, AssetType assetType)
+        public async Task<decimal> GetCurrentPriceAsync(string symbol, AssetType assetType)
         {
             IBar bar;
             switch(assetType)
@@ -47,7 +47,7 @@ namespace soad_csharp.brokers
                 default:
                     throw new ArgumentException("Invalid asset type");
             }
-            return bar?.Close;
+            return bar.Close;
         }
 
         public async Task<BidAsk> GetBidAskAsync(string symbol, AssetType assetType)
@@ -92,10 +92,10 @@ namespace soad_csharp.brokers
             };
         }
 
-        public async Task<List<Position>> GetPositionsAsync()
+        public async Task<List<BrokerPosition>> GetPositionsAsync()
         {
             var positions = await _tradingClient.ListPositionsAsync();
-            return [.. positions.Select(position => new Position
+            return [.. positions.Select(position => new BrokerPosition
             {
                 Symbol = position.Symbol,
                 Quantity = position.Quantity,
@@ -107,7 +107,10 @@ namespace soad_csharp.brokers
                     AssetClass.UsOption => AssetType.Option,
                     _ => throw new ArgumentException("Invalid asset type") 
 
-                }
+                },
+                CostBasis = position.CostBasis,
+                CurrentPrice = position.AssetCurrentPrice ?? throw new Exception("null AssetCurrentPrice unexpected"),
+                AverageEntryPrice = position.AverageEntryPrice
             })];
         }
         public async Task<OrderResponse> PlaceOrderAsync(
@@ -124,15 +127,16 @@ namespace soad_csharp.brokers
 
             decimal? roundedPrice = price.HasValue ? Math.Round(price.Value, 2) : (decimal?)null;
 
-
+            var qty = OrderQuantity.Fractional(quantity);
             var orderRequest = new NewOrderRequest(
-                symbol, (OrderQuantity)quantity, orderSide,
+                symbol, qty, orderSide,
                 parsedOrderType,
-                tif)
+                tif);
+            if (orderType == "limit")
             {
-                LimitPrice = roundedPrice
-            };
-
+                orderRequest.LimitPrice = roundedPrice;
+            }
+            
             var order = await _tradingClient.PostOrderAsync(orderRequest);
             return new OrderResponse
             {

@@ -16,7 +16,7 @@ public interface IBroker
     public Task<AccountInfo> GetAccountInfoAsync();
 
     // Retrieves positions for the account
-    public Task<List<Position>> GetPositionsAsync();
+    public Task<List<BrokerPosition>> GetPositionsAsync();
 
     // Places a stock order
     public Task<OrderResponse> PlaceOrderAsync(
@@ -46,7 +46,7 @@ public interface IBroker
     public Task<CancelOrderResponse> CancelOrderAsync(string orderId);
 
     // Retrieves the current price of a symbol (async)
-    public Task<decimal?> GetCurrentPriceAsync(string symbol, AssetType assetType);
+    public Task<decimal> GetCurrentPriceAsync(string symbol, AssetType assetType);
 
     // Retrieves the bid and ask prices of a symbol
     public Task<BidAsk> GetBidAskAsync(string symbol, AssetType assetType);
@@ -95,24 +95,54 @@ public class OrderStatus
     public decimal? Quantity { get; set; }
 }
 
-public class Position
+public class BrokerPosition
 {
     public string Symbol { get; set; }
     public decimal Quantity { get; set; }
     public decimal MarketValue { get; set; }
     public AssetType AssetType { get; set; }
+    public decimal CostBasis { get; set; }
+    public decimal CurrentPrice { get; set; }
+    public decimal AverageEntryPrice { get; set; }
 }
 public enum AssetType
 {
     Stock,
     Option,
-    Crypto
+    Crypto,
+    Cash
 }
 
 
 public class AssetAllocation
 {
-    public string Name { get; set; }
+    public string Symbol { get; set; }
     public decimal Allocation { get; set; }
-    public AssetType Type { get; set; }  
+    public AssetType AssetType { get; set; }
+    public decimal StartingCapital { get; set; }
+
+    public decimal? CurrentPrice { get; set; }
+
+    public decimal DesiredAllocationValue => StartingCapital * Allocation;
+    public decimal DesiredAllocationQuantity => (DesiredAllocationValue / CurrentPrice) ?? throw new Exception("Set CurrentPrice First");
+
+}
+
+public class TradeRequest
+{
+    public string Symbol { get; set; }
+    public decimal Quantity { get; set; }
+    public string Side { get; set; } // Buy or Sell
+    public decimal? Price { get; set; }
+    public string OrderType { get; set; } = "limit";
+    public string TimeInForce { get; set; } = "day";
+    public AssetType AssetType { get; set; }
+
+    // Optional: Priority or metadata for managing/processing trades
+    public int Priority { get; set; } = 0;
+
+    public override string ToString()
+    {
+        return $"TradeRequest: {Side} {Quantity} of {Symbol} @ {Price?.ToString() ?? "Market"} ({OrderType}), Priority: {Priority}";
+    }
 }

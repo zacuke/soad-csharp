@@ -8,7 +8,7 @@ public class Trade
     public int? BrokerId { get; set; } // Nullable
     public string Symbol { get; set; }
     public decimal Quantity { get; set; }
-    public decimal Price { get; set; }
+    public decimal? Price { get; set; }
     public decimal? ExecutedPrice { get; set; } // Nullable
     public string Side { get; set; }
     public string Status { get; set; }
@@ -24,7 +24,7 @@ public class AccountInfo
 {
     public int Id { get; set; }
     public string Broker { get; set; }
-    public float Value { get; set; }
+    public decimal Value { get; set; }
 }
 
 public class Balance
@@ -34,7 +34,7 @@ public class Balance
     public string Strategy { get; set; }
     public string Type { get; set; } // 'Cash' or 'Positions'
     
-    public float BalanceValue { get; set; } = 0.0F; // Renamed to avoid conflict with class name
+    public decimal BalanceValue { get; set; } = 0.0M; // Renamed to avoid conflict with class name
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
     // Navigation property for related Positions
@@ -48,12 +48,12 @@ public class Position
     public string Strategy { get; set; }
     public int? BalanceId { get; set; } // Foreign key, nullable for situations where no balance is associated
     public string Symbol { get; set; }
-    public float Quantity { get; set; }
-    public float LatestPrice { get; set; }
-    public float? CostBasis { get; set; } // Nullable
+    public decimal Quantity { get; set; }
+    public decimal LatestPrice { get; set; }
+    public decimal? CostBasis { get; set; } // Nullable
     public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
-    public float? UnderlyingVolatility { get; set; } // Nullable
-    public float? UnderlyingLatestPrice { get; set; } // Nullable
+    public decimal? UnderlyingVolatility { get; set; } // Nullable
+    public decimal? UnderlyingLatestPrice { get; set; } // Nullable
 
     // Navigation property for the related Balance
     public Balance Balance { get; set; }

@@ -16,21 +16,28 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuration, TradeD
 
         var AlpacaApiKey = configuration["Alpaca:ApiKey"];
         var AlpacaApiSecret = configuration["Alpaca:ApiSecret"];
-        IBroker broker = new AlpacaBroker(AlpacaApiKey, AlpacaApiSecret);
+        var broker = new AlpacaBroker(AlpacaApiKey, AlpacaApiSecret);
+        var startingCapital = 10000M;
         var allocations = new List<AssetAllocation>
         {            
-            new() { Name = "AAPL", Allocation = 0.2M, Type = AssetType.Stock },
-            new() { Name = "GOOGL", Allocation = 0.3M, Type = AssetType.Stock },
-            new() { Name = "MSFT", Allocation = 0.2M, Type = AssetType.Stock },
-            new() { Name = "BTC/USD", Allocation = 0.15M, Type = AssetType.Crypto },
-            new() { Name = "ETH/USD", Allocation = 0.15M, Type = AssetType.Crypto },
+            new() { Symbol = "AAPL", Allocation = 0.2M, AssetType = AssetType.Stock, StartingCapital=startingCapital },
+            new() { Symbol = "GOOGL", Allocation = 0.3M, AssetType = AssetType.Stock,  StartingCapital=startingCapital },
+            new() { Symbol = "MSFT", Allocation = 0.2M, AssetType = AssetType.Stock, StartingCapital=startingCapital },
+            new() { Symbol = "BTC/USD", Allocation = 0.15M, AssetType = AssetType.Crypto, StartingCapital=startingCapital },
+            new() { Symbol = "ETH/USD", Allocation = 0.15M, AssetType = AssetType.Crypto, StartingCapital=startingCapital },
+          //  new() { Name = "CASH", Allocation = .9M, Type = AssetType.Cash },
 
         };
-        var strategy = new ConstantPercentageStrategy(broker, appDbContext, "TestStrategy", allocations, 0.2M, 5, 10000M, 0.1M, logger);
-        await strategy.InitializeAsync();
-        await strategy.RebalanceAsync();
-
+      //  var strategy = new ConstantPercentageStrategy(broker, appDbContext, "TestStrategy", allocations, 0.2M, 5, 10000M, 0.1M, logger);
+        //strategy.Execute();
+        //await strategy.InitializeAsync();
+        //await strategy.RebalanceAsync();
+        var strat = new ConstantPercentageStrategy(broker, appDbContext, allocations, logger, startingCapital, "TestStrategy");
+        await strat.Execute();
         logger.LogInformation("Done");
+
+
+
 
     }
 
