@@ -22,8 +22,8 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuration, TradeD
             new() { Name = "AAPL", Allocation = 0.2M, Type = AssetType.Stock },
             new() { Name = "GOOGL", Allocation = 0.3M, Type = AssetType.Stock },
             new() { Name = "MSFT", Allocation = 0.2M, Type = AssetType.Stock },
-            new() { Name = "BTCUSD", Allocation = 0.15M, Type = AssetType.Crypto },
-            new() { Name = "ETHUSD", Allocation = 0.15M, Type = AssetType.Crypto },
+            new() { Name = "BTC/USD", Allocation = 0.15M, Type = AssetType.Crypto },
+            new() { Name = "ETH/USD", Allocation = 0.15M, Type = AssetType.Crypto },
 
         };
         var strategy = new ConstantPercentageStrategy(broker, appDbContext, "TestStrategy", allocations, 0.2M, 5, 10000M, 0.1M, logger);

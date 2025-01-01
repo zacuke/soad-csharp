@@ -92,9 +92,10 @@ public class ConstantPercentageStrategy : BaseStrategy
             // Calculate target balance for the stock
             var targetInvestment = targetInvestmentBalance * targetAllocationPercentage;
 
+            var nonSlashed = TradingPairHelper.Translate(stock);
             // Check existing positions for the stock
             var currentQuantity = (decimal)currentDbPositions
-                .FirstOrDefault(pos => pos.Symbol == stock).Quantity ;
+                .FirstOrDefault(pos => pos.Symbol == nonSlashed).Quantity ;
 
             // Get current price of the stock
             var currentPrice = await Broker.GetCurrentPriceAsync(stock, allocation.Type) ?? 0;
@@ -106,18 +107,18 @@ public class ConstantPercentageStrategy : BaseStrategy
             }
 
             // Calculate target quantity
-            var targetQuantity = Math.Floor(targetInvestment / (decimal)currentPrice);
+            var targetQuantity = targetInvestment / currentPrice;
 
             // If holdings are below the target quantity (minus buffer), buy more
             if (currentQuantity < targetQuantity * (1 - Buffer))
             {
-                var quantityToBuy = (int)Math.Floor(targetQuantity - currentQuantity);
+                var quantityToBuy = targetQuantity - currentQuantity;
                 await PlaceOrderAsync(stock, quantityToBuy, "buy", price: currentPrice);
             }
             // If holdings exceed the target quantity (plus buffer), sell the excess
             else if (currentQuantity > targetQuantity * (1 + Buffer))
             {
-                var quantityToSell = (int)Math.Floor(currentQuantity - targetQuantity);
+                var quantityToSell = currentQuantity - targetQuantity;
                 await PlaceOrderAsync(stock, quantityToSell, "sell", price: currentPrice);
             }
         }

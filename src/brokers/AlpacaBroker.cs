@@ -112,7 +112,7 @@ namespace soad_csharp.brokers
         }
         public async Task<OrderResponse> PlaceOrderAsync(
             string symbol,
-            int quantity,
+            decimal quantity,
             string side,
             decimal? price = null,
             string orderType = "limit",
@@ -122,12 +122,15 @@ namespace soad_csharp.brokers
             Enum.TryParse(timeInForce, true, out TimeInForce tif);
             Enum.TryParse(orderType, true, out OrderType parsedOrderType);
 
+            decimal? roundedPrice = price.HasValue ? Math.Round(price.Value, 2) : (decimal?)null;
+
+
             var orderRequest = new NewOrderRequest(
-                symbol, quantity, orderSide,
+                symbol, (OrderQuantity)quantity, orderSide,
                 parsedOrderType,
                 tif)
             {
-                LimitPrice = price
+                LimitPrice = roundedPrice
             };
 
             var order = await _tradingClient.PostOrderAsync(orderRequest);
@@ -146,7 +149,7 @@ namespace soad_csharp.brokers
 
         public Task<OrderResponse> PlaceOptionOrderAsync(
             string symbol,
-            int quantity,
+            decimal quantity,
             string side,
             string optionType,
             decimal strikePrice,

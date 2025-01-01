@@ -21,7 +21,7 @@ public interface IBroker
     // Places a stock order
     public Task<OrderResponse> PlaceOrderAsync(
         string symbol,
-        int quantity,
+        decimal quantity,
         string side,
         decimal? price = null,
         string orderType = "limit",
@@ -30,7 +30,7 @@ public interface IBroker
     // Places an option order
     public Task<OrderResponse> PlaceOptionOrderAsync(
         string symbol,
-        int quantity,
+        decimal quantity,
         string side,
         string optionType,
         decimal strikePrice,

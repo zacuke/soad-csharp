@@ -7,15 +7,15 @@ public class Trade
     public int Id { get; set; }
     public int? BrokerId { get; set; } // Nullable
     public string Symbol { get; set; }
-    public int Quantity { get; set; }
-    public float Price { get; set; }
-    public float? ExecutedPrice { get; set; } // Nullable
+    public decimal Quantity { get; set; }
+    public decimal Price { get; set; }
+    public decimal? ExecutedPrice { get; set; } // Nullable
     public string Side { get; set; }
     public string Status { get; set; }
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     public string Broker { get; set; }
     public string Strategy { get; set; }
-    public float? ProfitLoss { get; set; } // Nullable
+    public decimal? ProfitLoss { get; set; } // Nullable
     public string Success { get; set; }
     public string ExecutionStyle { get; set; }
 }
@@ -80,6 +80,10 @@ public class TradeDbContext(DbContextOptions<TradeDbContext> options) : DbContex
             entity.Property(t => t.Side).IsRequired();
             entity.Property(t => t.Status).IsRequired();
             entity.Property(t => t.Timestamp);//.HasDefaultValue("GETUTCDATE()");
+            entity.Property(t => t.BrokerId).HasColumnName("broker_id");
+            entity.Property(t => t.ExecutedPrice).HasColumnName("executed_price");
+            entity.Property(t => t.ProfitLoss).HasColumnName("profit_loss");
+            entity.Property(t => t.ExecutionStyle).HasColumnName("execution_style");
         });
 
         // AccountInfo entity configuration
@@ -97,7 +101,8 @@ public class TradeDbContext(DbContextOptions<TradeDbContext> options) : DbContex
             entity.Property(b => b.Broker).IsRequired();
             entity.Property(b => b.Type).IsRequired();
             entity.Property(b => b.Timestamp);//.HasDefaultValue("GETUTCDATE()");
-            entity.Property(entity => entity.BalanceValue).HasColumnName("Balance"); // Rename column
+            entity.Property(entity => entity.BalanceValue).HasColumnName("balance"); // Rename column
+ 
             // Create indexes
             //entity.HasIndex(b => new { b.Broker, b.Strategy, b.Timestamp }).HasDatabaseName("ix_broker_strategy_timestamp");
             //  entity.HasIndex(b => new { b.Type, b.Timestamp }).HasDatabaseName("ix_type_timestamp");
@@ -110,12 +115,12 @@ public class TradeDbContext(DbContextOptions<TradeDbContext> options) : DbContex
             entity.Property(p => p.Broker).IsRequired();
             entity.Property(p => p.Symbol).IsRequired();
             entity.Property(p => p.Quantity).IsRequired();
-            entity.Property(p => p.LatestPrice).IsRequired().HasColumnName("Latest_Price");
-            entity.Property(p => p.UnderlyingLatestPrice).HasColumnName("Underlying_Latest_Price");
-            entity.Property(p => p.UnderlyingVolatility).HasColumnName("Underlying_Volatility");
-            entity.Property(p => p.LastUpdated).HasColumnName("Last_Updated");//.HasDefaultValue("GETUTCDATE()");
-            entity.Property(p => p.BalanceId).HasColumnName("Balance_Id");
-            entity.Property(p => p.CostBasis).HasColumnName("Cost_Basis");
+            entity.Property(p => p.LatestPrice).IsRequired().HasColumnName("latest_price");
+            entity.Property(p => p.UnderlyingLatestPrice).HasColumnName("underlying_latest_price");
+            entity.Property(p => p.UnderlyingVolatility).HasColumnName("underlying_volatility");
+            entity.Property(p => p.LastUpdated).HasColumnName("last_updated");//.HasDefaultValue("GETUTCDATE()");
+            entity.Property(p => p.BalanceId).HasColumnName("balance_id");
+            entity.Property(p => p.CostBasis).HasColumnName("cost_basis");
             // Relationship with Balance
             entity.HasOne(p => p.Balance)
                   .WithMany(b => b.Positions)

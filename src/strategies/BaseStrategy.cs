@@ -178,7 +178,7 @@ namespace soad_csharp.strategies
         // Place an order with the broker and record it in the trades table
         public async Task PlaceOrderAsync(
             string symbol,
-            int quantity,
+            decimal quantity,
             string side,
             decimal? price = null,
             string orderType = "limit",
@@ -193,7 +193,7 @@ namespace soad_csharp.strategies
                 Strategy = StrategyName,
                 Symbol = symbol,
                 Quantity = quantity,
-                Price = (float)(price ?? 0),
+                Price = price ?? 0 ,
                 Side = side,
                 Status = response.Status,
                 Timestamp = DateTime.UtcNow,
