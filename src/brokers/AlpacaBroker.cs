@@ -11,17 +11,12 @@ namespace soad_csharp.brokers
 {
     public class AlpacaBroker : IBroker
     {
-        // Replace these with your Alpaca API credentials
-  
         private readonly IAlpacaTradingClient _tradingClient;
         private readonly IAlpacaDataClient _dataClient;
         private readonly IAlpacaCryptoDataClient _cryptoDataClient;
         public AlpacaBroker(string apiKey, string apiSecret)
         {
-            //var AlpacaApiKey = _configuration["Alpaca:ApiKey"];
-            //var AlpacaApiSecret = _configuration["Alpaca:ApiSecret"];
             var secretKey = new SecretKey(apiKey, apiSecret);
-
             _tradingClient = Environments.Paper.GetAlpacaTradingClient(secretKey);
             _dataClient = Environments.Paper.GetAlpacaDataClient(secretKey);
             _cryptoDataClient = Environments.Paper.GetAlpacaCryptoDataClient(secretKey);
@@ -72,12 +67,6 @@ namespace soad_csharp.brokers
                 AskPrice = quote?.AskPrice
             };
 
-            //var quote = await _dataClient.GetLatestQuoteAsync(new LatestMarketDataRequest(symbol)) ;
-            //return new BidAsk
-            //{
-            //    BidPrice = quote?.BidPrice,
-            //    AskPrice = quote?.AskPrice
-            //};
         }
 
         public async Task<AccountInfo> GetAccountInfoAsync()
@@ -169,27 +158,12 @@ namespace soad_csharp.brokers
             string optionType,
             decimal strikePrice,
             string expirationDate,
-            decimal? price = null,
-            string orderType = "limit",
-            string timeInForce = "day")
+            decimal price,
+            string orderType,
+            string timeInForce )
         {
-            // Alpaca does not support options directly.
-            throw new NotImplementedException("Options trading is not supported by the Alpaca API.");
+            throw new NotImplementedException("Options trading is not supported");
         }
-
-        //public async Task<OrderStatus> GetOrderStatusAsync(string orderId)
-        //{
-        //    var order = await _tradingClient.GetOrderAsync(orderId);
-        //    return new OrderStatus
-        //    {
-        //        OrderId = order.OrderId.ToString(),
-        //        Status = order.OrderStatus.ToString(),//todo create and convert to interface enum
-        //        Symbol = order.Symbol,
-        //        FilledQuantity = order.FilledQuantity ,
-        //        Quantity = order.Quantity, 
-        //        RemainingQuantity = order.Quantity - order.FilledQuantity
-        //    };
-        //}
 
         public async Task<CancelOrderResponse> CancelOrderAsync(string orderId)
         {
@@ -213,9 +187,24 @@ namespace soad_csharp.brokers
             }
         }
 
-        public async Task<OrderResponse> GetExistingOrderAsync(string clientOrderId) 
+        public async Task<OrderResponse> GetExistingOrderAsync(string responseId = null, string clientOrderId = null) 
         {
-            var order = await _tradingClient.GetOrderAsync(clientOrderId);
+            if (responseId == null && clientOrderId == null)
+            {
+                throw new Exception("Must pass at least one of responseId or clientOrderId");
+            }
+ 
+ 
+            IOrder order;
+            if (clientOrderId != null)
+            {
+                order = await _tradingClient.GetOrderAsync(clientOrderId);
+            }
+            else
+            {
+                order = await _tradingClient.GetOrderAsync(Guid.Parse(responseId));
+
+            }
             return new OrderResponse
             {
                 OrderId = order.OrderId.ToString(),
@@ -232,6 +221,34 @@ namespace soad_csharp.brokers
                 BrokerResponseFilledQty = order.FilledQuantity,
                 BrokerResponseId = order.OrderId.ToString()
             };
+        }
+
+        public async Task<List<OrderResponse>> GetOrdersAsync(string status = "open")
+        {
+            //var orderStatusFilter = (OrderStatusFilter)Enum.Parse(typeof(OrderStatusFilter), status);
+            var orderStatusFilter = EnumExtensions.GetEnumValueFromEnumMember<OrderStatusFilter>(status);
+            var ordersResponse = await _tradingClient.ListOrdersAsync(new ListOrdersRequest() { OrderStatusFilter= orderStatusFilter });
+            var orders = new List<OrderResponse>();
+            foreach (var order in ordersResponse)
+            {
+                orders.Add( new OrderResponse
+                {
+                    OrderId = order.OrderId.ToString(),
+                    Status = order.OrderStatus.ToString(),//todo create and convert to interface enum
+                    Symbol = order.Symbol,
+                    Quantity = order.Quantity ?? throw new Exception("unexpected null quantity returned from broker"),
+                    Side = order.OrderSide.ToString(),
+                    OrderType = order.OrderType.ToString(),//todo create and convert to interface enum
+                    LimitPrice = order.LimitPrice,
+                    TimeInForce = order.TimeInForce.ToString(),
+                    BrokerResponseAssetClass = order.AssetClass.ToString(),
+                    BrokerResponseAssetId = order.AssetId.ToString(),
+                    ClientOrderId = order.ClientOrderId,
+                    BrokerResponseFilledQty = order.FilledQuantity,
+                    BrokerResponseId = order.OrderId.ToString()
+                }); 
+            }
+            return orders;
         }
     }
 }

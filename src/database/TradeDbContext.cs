@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Configuration;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace soad_csharp.database;
@@ -88,7 +89,7 @@ public class TradeDbContext(DbContextOptions<TradeDbContext> options) : DbContex
             entity.Property(t => t.Quantity).IsRequired();
             entity.Property(t => t.Price).IsRequired();
             entity.Property(t => t.Side).IsRequired();
-            entity.Property(t => t.Status).IsRequired();
+            entity.Property(t => t.Status);
             entity.Property(t => t.Timestamp);//.HasDefaultValue("GETUTCDATE()");
             entity.Property(t => t.BrokerId).HasColumnName("broker_id");
             entity.Property(t => t.ExecutedPrice).HasColumnName("executed_price");
@@ -143,8 +144,18 @@ public class TradeContextFactory : IDesignTimeDbContextFactory<TradeDbContext>
 {
     public TradeDbContext CreateDbContext(string[] args)
     {
+        // Build the IConfiguration object to read from appsettings.json
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory()) // Ensure the path is correct
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddUserSecrets<TradeContextFactory>(optional: true, reloadOnChange: true)
+            .Build();
+
+        // Retrieve the connection string from the "ConnectionStrings" section
+        var connectionString = configuration.GetConnectionString("TradeDb");
+
         var optionsBuilder = new DbContextOptionsBuilder<TradeDbContext>();
-        optionsBuilder.UseSqlite("Data Source=tradedb.db");
+        optionsBuilder.UseNpgsql(connectionString);
 
         return new TradeDbContext(optionsBuilder.Options);
     }

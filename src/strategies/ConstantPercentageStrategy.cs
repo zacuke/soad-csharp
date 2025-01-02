@@ -42,8 +42,7 @@ public class ConstantPercentageStrategy : SimpleStrategy
         var hasUnfilledTrades = await CheckUnfilledTrades();
         if (hasUnfilledTrades)
         {
-            _logger.LogWarning("Unfilled trades found, so not running, for strategy {StrategyName}", StrategyName);
-
+            _logger.LogWarning("Open or Unfilled trades found, so not running strategy {StrategyName}", StrategyName);
             return;
         }
         var brokerTotalValue = 0M;
@@ -60,7 +59,7 @@ public class ConstantPercentageStrategy : SimpleStrategy
         //var cashBalance = accountInfo.BuyingPower;
  
         var is_initialized = await InitializeStrategyAsync(_startingCapital, brokerTotalValue);
-        is_initialized = false;
+       //is_initialized = false;
         if (!is_initialized)
         {
             //the idea here is we detected this is our first time
@@ -82,7 +81,7 @@ public class ConstantPercentageStrategy : SimpleStrategy
 
                 foreach (var b in _allocations)
                 {
-                    var currentHoldingQuantity = brokerPositions.GetBrokerPositionsWhere(b.Symbol).Quantity;
+                    var currentHoldingQuantity = brokerPositions.GetBrokerPositionsWhere(b.Symbol).Quantity ;
 
                     if (b.DesiredAllocationQuantity > currentHoldingQuantity)
                     {
@@ -93,7 +92,8 @@ public class ConstantPercentageStrategy : SimpleStrategy
                             quantity: quantityToBuy, 
                             side: "buy", 
                             price: price, 
-                            orderType:"market"
+                            orderType:"market",
+                            timeInForce:"gtc"
                         );
 
                     }

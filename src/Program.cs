@@ -18,7 +18,7 @@ var connectionString = builder.Configuration.GetConnectionString("TradeDb");
 
 builder.Services.AddDbContext<TradeDbContext>(options =>
 {
-    options.UseSqlite(connectionString);
+    options.UseNpgsql(connectionString);
 });
 
 //log httpclient requests

@@ -36,9 +36,9 @@ public interface IBroker
         string optionType,
         decimal strikePrice,
         string expirationDate,
-        decimal? price = null,
-        string orderType = "limit",
-        string timeInForce = "day");
+        decimal price ,
+        string orderType,
+        string timeInForce);
 
     // Retrieves the status of an order
     //public Task<OrderStatus> GetOrderStatusAsync(string orderId);
@@ -52,7 +52,8 @@ public interface IBroker
     // Retrieves the bid and ask prices of a symbol
     public Task<BidAsk> GetBidAskAsync(string symbol, AssetType assetType);
 
-    public Task<OrderResponse> GetExistingOrderAsync(string tradeId);
+    public Task<OrderResponse> GetExistingOrderAsync(string responseId = null, string clientOrderId = null);
+    public Task<List<OrderResponse>> GetOrdersAsync(string status);
 }
 
 public class AccountInfo
@@ -142,8 +143,8 @@ public class TradeRequest
     public decimal Quantity { get; set; }
     public string Side { get; set; } // Buy or Sell
     public decimal? Price { get; set; }
-    public string OrderType { get; set; } = "limit";
-    public string TimeInForce { get; set; } = "day";
+    public string OrderType { get; set; } 
+    public string TimeInForce { get; set; } 
     public AssetType AssetType { get; set; }
 
     // Optional: Priority or metadata for managing/processing trades

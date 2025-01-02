@@ -96,8 +96,13 @@ public static class TradingPairHelper
             string.Equals(bp.Symbol, unslashedFormat, StringComparison.OrdinalIgnoreCase));
 
         if (result == null)
-            throw new ArgumentOutOfRangeException(nameof(symbol));
+            return new BrokerPosition()
+            {
+                Symbol = symbol,
+                Quantity = 0
+            };
 
         return result;
     }
+
 }
