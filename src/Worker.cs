@@ -12,35 +12,61 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuration, TradeD
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
+
         logger.LogInformation("Starting Worker");
+
+        await TestStrategy();
+        await OtherStrategy();
+
+
+
+    }
+
+    private  async Task TestStrategy()
+    {
 
         var AlpacaApiKey = configuration["Alpaca:ApiKey"];
         var AlpacaApiSecret = configuration["Alpaca:ApiSecret"];
         var broker = new AlpacaBroker(AlpacaApiKey, AlpacaApiSecret);
         var startingCapital = 10000M;
         var allocations = new List<AssetAllocation>
-        {            
+        {
             new() { Symbol = "AAPL", Allocation = 0.2M, AssetType = AssetType.Stock, StartingCapital=startingCapital },
             new() { Symbol = "GOOGL", Allocation = 0.3M, AssetType = AssetType.Stock,  StartingCapital=startingCapital },
             new() { Symbol = "MSFT", Allocation = 0.2M, AssetType = AssetType.Stock, StartingCapital=startingCapital },
             new() { Symbol = "BTC/USD", Allocation = 0.15M, AssetType = AssetType.Crypto, StartingCapital=startingCapital },
             new() { Symbol = "ETH/USD", Allocation = 0.15M, AssetType = AssetType.Crypto, StartingCapital=startingCapital },
-          //  new() { Name = "CASH", Allocation = .9M, Type = AssetType.Cash },
 
         };
-      //  var strategy = new ConstantPercentageStrategy(broker, appDbContext, "TestStrategy", allocations, 0.2M, 5, 10000M, 0.1M, logger);
-        //strategy.Execute();
-        //await strategy.InitializeAsync();
-        //await strategy.RebalanceAsync();
+
         var strat = new ConstantPercentageStrategy(broker, appDbContext, allocations, logger, startingCapital, "TestStrategy");
         await strat.Execute();
-        logger.LogInformation("Done");
-
-
-
+        logger.LogInformation("TestStrategy Done");
 
     }
 
+    private async Task OtherStrategy()
+    {
+
+        var AlpacaApiKey = configuration["Alpaca2:ApiKey"];
+        var AlpacaApiSecret = configuration["Alpaca2:ApiSecret"];
+        var broker = new AlpacaBroker(AlpacaApiKey, AlpacaApiSecret);
+        var startingCapital = 10000M;
+        var allocations = new List<AssetAllocation>
+        {
+        //    new() { Symbol = "AAPL", Allocation = 0.2M, AssetType = AssetType.Stock, StartingCapital=startingCapital },
+        //    new() { Symbol = "GOOGL", Allocation = 0.3M, AssetType = AssetType.Stock,  StartingCapital=startingCapital },
+        //    new() { Symbol = "MSFT", Allocation = 0.2M, AssetType = AssetType.Stock, StartingCapital=startingCapital },
+            new() { Symbol = "BTC/USD", Allocation = 0.15M, AssetType = AssetType.Crypto, StartingCapital=startingCapital },
+            new() { Symbol = "ETH/USD", Allocation = 0.15M, AssetType = AssetType.Crypto, StartingCapital=startingCapital },
+
+        };
+
+        var strat = new ConstantPercentageStrategy(broker, appDbContext, allocations, logger, startingCapital, "OtherStrategy");
+        await strat.Execute();
+        logger.LogInformation("OtherStrategy Done");
+
+    }
     public Task StopAsync(CancellationToken cancellationToken)
     {
         return Task.CompletedTask;

@@ -77,7 +77,7 @@ public abstract class SimpleStrategy(ILogger _logger, IBroker _broker, TradeDbCo
             if (dbPos == null)
             {
                 // Add new position to the database
-                var newPosition = new soad_csharp.database.Position
+                var newPosition = new Position
                 {
                     Broker = _broker.GetType().Name,
                     Strategy = StrategyName,
@@ -135,12 +135,10 @@ public abstract class SimpleStrategy(ILogger _logger, IBroker _broker, TradeDbCo
         string symbol,
         decimal quantity,
         string side,
-        decimal? price = null,
+        decimal price,
         string orderType = "limit",
         string timeInForce = "day")
-    {
-        var response = await _broker.PlaceOrderAsync(symbol, quantity, side, price, orderType, timeInForce);
-
+    {   
         // Save the trade details in the database
         var trade = new Trade
         {
@@ -150,12 +148,24 @@ public abstract class SimpleStrategy(ILogger _logger, IBroker _broker, TradeDbCo
             Quantity = quantity,
             Price = price,
             Side = side,
-            Status = response.Status,
+            //Status = response.Status,
             Timestamp = DateTime.UtcNow,
             ExecutionStyle = string.Empty
         };
 
         await _dbContext.Trades.AddAsync(trade);
+        await _dbContext.SaveChangesAsync();
+        var clientOrderId = Guid.NewGuid().ToString();
+        var response = await _broker.PlaceOrderAsync(symbol, quantity, side, price, orderType, timeInForce, clientOrderId);
+
+        trade.Quantity = response.Quantity;
+        trade.Status = response.Status;
+        trade.BrokerResponseId = response.BrokerResponseId;
+
+        trade.BrokerResponseAssetId = response.BrokerResponseAssetId;
+        trade.BrokerResponseAssetClass = response.BrokerResponseAssetClass;
+        trade.BrokerResponseFilledQty = response.BrokerResponseFilledQty;
+        trade.IsFilled = response.Quantity == response.BrokerResponseFilledQty;
         await _dbContext.SaveChangesAsync();
 
         _logger.LogInformation("Order placed for strategy {StrategyName}: {OrderDetails}", StrategyName, trade);
@@ -206,6 +216,37 @@ public abstract class SimpleStrategy(ILogger _logger, IBroker _broker, TradeDbCo
         return is_initialized;
     }
 
+    public async Task<bool> CheckUnfilledTrades()
+    {
+        var unfilledTrades = await (from a in _dbContext.Trades
+                  where a.Strategy == StrategyName
+                    && a.IsFilled == false
+                  select a).ToListAsync();
+
+        foreach(var trade in unfilledTrades)
+        {
+            var existingTrade = await _broker.GetExistingOrderAsync(trade.ClientOrderId);
+            if ( existingTrade.Quantity == existingTrade.BrokerResponseFilledQty)
+            {
+                
+                trade.IsFilled = true;
+            }
+        }
+
+        await _dbContext.SaveChangesAsync();
+
+        if (await (from a in _dbContext.Trades
+                   where a.Strategy == StrategyName
+                     && a.IsFilled == false
+                   select a).AnyAsync())
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
 }
 
 ////using System;

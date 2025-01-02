@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace soad_csharp.database;
@@ -18,6 +19,15 @@ public class Trade
     public decimal? ProfitLoss { get; set; } // Nullable
     public string Success { get; set; }
     public string ExecutionStyle { get; set; }
+
+    public string BrokerResponseId { get; set; }
+    public string ClientOrderId { get; set; }
+    public string BrokerResponseAssetId { get; set; }
+    public string BrokerResponseAssetClass { get; set; }
+
+    public decimal? BrokerResponseFilledQty { get; set; }    
+
+    public bool IsFilled { get; set; }
 }
 
 public class AccountInfo
@@ -127,5 +137,15 @@ public class TradeDbContext(DbContextOptions<TradeDbContext> options) : DbContex
                   .HasForeignKey(p => p.BalanceId)
                   .OnDelete(DeleteBehavior.SetNull); // Set foreign key to null on delete
         });
+    }
+}
+public class TradeContextFactory : IDesignTimeDbContextFactory<TradeDbContext>
+{
+    public TradeDbContext CreateDbContext(string[] args)
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<TradeDbContext>();
+        optionsBuilder.UseSqlite("Data Source=tradedb.db");
+
+        return new TradeDbContext(optionsBuilder.Options);
     }
 }

@@ -39,6 +39,13 @@ public class ConstantPercentageStrategy : SimpleStrategy
     {
         //sync broker to local
         var brokerPositions = await SyncPositionsToLocalAsync();
+        var hasUnfilledTrades = await CheckUnfilledTrades();
+        if (hasUnfilledTrades)
+        {
+            _logger.LogWarning("Unfilled trades found, so not running, for strategy {StrategyName}", StrategyName);
+
+            return;
+        }
         var brokerTotalValue = 0M;
         foreach (var position in brokerPositions)
         {
@@ -80,7 +87,14 @@ public class ConstantPercentageStrategy : SimpleStrategy
                     if (b.DesiredAllocationQuantity > currentHoldingQuantity)
                     {
                         var quantityToBuy =  b.DesiredAllocationQuantity - currentHoldingQuantity;
-                        await PlaceOrderAsync(b.Symbol, quantityToBuy, "buy", price: b.CurrentPrice, orderType:"market");
+                        decimal price = b.CurrentPrice ?? throw new Exception("unexpected null currentprice");
+                        await PlaceOrderAsync(
+                            symbol: b.Symbol, 
+                            quantity: quantityToBuy, 
+                            side: "buy", 
+                            price: price, 
+                            orderType:"market"
+                        );
 
                     }
                 }
