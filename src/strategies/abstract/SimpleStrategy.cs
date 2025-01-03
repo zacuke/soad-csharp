@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using soad_csharp.brokers;
 using soad_csharp.database;
+using soad_csharp.Extensions;
 using System.Diagnostics;
 using BrokerPosition = soad_csharp.brokers.BrokerPosition;
 
@@ -10,7 +11,12 @@ public abstract class SimpleStrategy(ILogger _logger, IBroker _broker, TradeDbCo
 {
     //    // Abstract properties and methods for derived strategies
     public abstract string StrategyName { get; }
-   // public abstract decimal StartingCapital { get; }
+    public abstract decimal StartingCapital { get; }
+    public abstract decimal ThresholdCapital { get; }
+    public abstract List<BrokerPosition> BrokerPositions { get; }
+    public abstract decimal BrokerTotalValue { get; }
+
+    // public abstract decimal StartingCapital { get; }
     public abstract Task Execute();
     //    protected abstract void PerformRebalance();
 
@@ -109,6 +115,7 @@ public abstract class SimpleStrategy(ILogger _logger, IBroker _broker, TradeDbCo
         await _dbContext.SaveChangesAsync();
 
         _logger.LogDebug("Position sync completed for strategy {StrategyName}", StrategyName);
+
         return brokerPositions;
     }
 
@@ -120,14 +127,14 @@ public abstract class SimpleStrategy(ILogger _logger, IBroker _broker, TradeDbCo
             throw new Exception("Allocations must sum to 1.0 (100%)");
         }
     }
-    protected void PostValidateAllocations(List<AssetAllocation> allocations, decimal startingCapital)
+    protected void PostValidateAllocations(List<AssetAllocation> allocations )
     {
         decimal checkAllocations = 0;
         foreach (var b in allocations)
         {
             checkAllocations += b.DesiredAllocationValue;
         }
-        if (checkAllocations != startingCapital)
+        if (checkAllocations != StartingCapital)
             throw new Exception("Problem calculation allocation");
 
     }
@@ -184,7 +191,7 @@ public abstract class SimpleStrategy(ILogger _logger, IBroker _broker, TradeDbCo
     }
 
 
-    public async Task<bool> InitializeStrategyAsync(decimal startingCapital, decimal brokerTotalValue)
+    public async Task<bool> IsStrategyInitializedAsync( )
     {
         bool is_initialized = false;
         var balance = await _dbContext.Balances
@@ -200,7 +207,7 @@ public abstract class SimpleStrategy(ILogger _logger, IBroker _broker, TradeDbCo
                 Broker = _broker.GetType().Name,
                 Strategy = StrategyName,
                 Type = "cash",
-                BalanceValue = startingCapital,
+                BalanceValue = StartingCapital,
                 Timestamp = DateTime.UtcNow
             };
 
@@ -217,7 +224,7 @@ public abstract class SimpleStrategy(ILogger _logger, IBroker _broker, TradeDbCo
                 Broker = _broker.GetType().Name,
                 Strategy = StrategyName,
                 Type = "positions",
-                BalanceValue = Math.Round(brokerTotalValue,2),
+                BalanceValue = Math.Round(BrokerTotalValue, 2),
                 Timestamp = DateTime.UtcNow
             };
 
@@ -257,6 +264,43 @@ public abstract class SimpleStrategy(ILogger _logger, IBroker _broker, TradeDbCo
                          && a.IsFilled == false
                        select a).AnyAsync() ;
        
+    }
+
+    public async Task PurchaseAllocation(List<AssetAllocation> allocations    )
+    {
+
+        //increase our holdings the first time if we don't have enough assets
+        if (BrokerTotalValue < ThresholdCapital)
+        {
+            foreach (var b in  allocations)
+            {
+                var stockPrice = await _broker.GetCurrentPriceAsync(b.Symbol, b.AssetType);
+                b.CurrentPrice = stockPrice;
+
+            }
+
+            PostValidateAllocations( allocations );
+
+            foreach (var b in  allocations)
+            {
+                var currentHoldingQuantity = BrokerPositions.GetBrokerPositionsWhere(b.Symbol).Quantity;
+
+                if (b.DesiredAllocationQuantity > currentHoldingQuantity)
+                {
+                    var quantityToBuy = b.DesiredAllocationQuantity - currentHoldingQuantity;
+                    decimal price = b.CurrentPrice ?? throw new Exception("unexpected null currentprice");
+                    await PlaceOrderAsync(
+                        symbol: b.Symbol,
+                        quantity: quantityToBuy,
+                        side: "buy",
+                        price: price,
+                        orderType: "market",
+                        timeInForce: "gtc"
+                    );
+
+                }
+            }
+        }
     }
 }
 

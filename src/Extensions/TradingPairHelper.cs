@@ -1,7 +1,7 @@
 ﻿using soad_csharp.brokers;
 using System;
 using System.Collections.Generic;
-namespace soad_csharp;
+namespace soad_csharp.Extensions;
 
 public static class TradingPairHelper
 {
@@ -50,7 +50,7 @@ public static class TradingPairHelper
 
         // Fallback: Remove slash and try matching
         string unslashedInput = input.Replace("/", "").ToUpperInvariant();
-        if (Enum.TryParse<TradingPair>(unslashedInput, true, out pair))
+        if (Enum.TryParse(unslashedInput, true, out pair))
         {
             return pair.ToString();
         }
@@ -75,7 +75,7 @@ public static class TradingPairHelper
         string normalizedSymbol = symbol;
         TradingPair tradingPair;
 
-        if (Enum.TryParse<TradingPair>(symbol.Replace("/", "").ToUpperInvariant(), true, out tradingPair))
+        if (Enum.TryParse(symbol.Replace("/", "").ToUpperInvariant(), true, out tradingPair))
         {
             // If the symbol can be translated into a TradingPair enum:
             normalizedSymbol = tradingPair.ToString();
@@ -85,13 +85,13 @@ public static class TradingPairHelper
         string slashedFormat = null;
         string unslashedFormat = normalizedSymbol;
 
-        if (Enum.TryParse<TradingPair>(normalizedSymbol, true, out tradingPair))
+        if (Enum.TryParse(normalizedSymbol, true, out tradingPair))
         {
             slashedFormat = GetSlashedFormat(tradingPair);
         }
 
         // Search for matches in brokerPositions
-        var result =  brokerPositions.FirstOrDefault(bp =>
+        var result = brokerPositions.FirstOrDefault(bp =>
             string.Equals(bp.Symbol, slashedFormat, StringComparison.OrdinalIgnoreCase) ||
             string.Equals(bp.Symbol, unslashedFormat, StringComparison.OrdinalIgnoreCase));
 
