@@ -1,13 +1,13 @@
 ﻿using Alpaca.Markets;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using soad_csharp.database;
+using soad_csharp.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace soad_csharp.brokers
+namespace soad_csharp.Brokers
 {
     public class AlpacaBroker : IBroker
     {

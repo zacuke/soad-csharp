@@ -1,10 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using soad_csharp;
-using soad_csharp.brokers;
-using soad_csharp.database;
+using soad_csharp.Brokers;
+using soad_csharp.Database;
 using soad_csharp.Extensions;
-using soad_csharp.strategies.@abstract;
+using soad_csharp.Strategies.Abstract;
 using System.Diagnostics;
 
 public class ConstantPercentageStrategy : SimpleStrategy
@@ -40,9 +40,7 @@ public class ConstantPercentageStrategy : SimpleStrategy
     public override string StrategyName => _strategyName;
     public override decimal StartingCapital => _startingCapital;
     public override decimal ThresholdCapital => _startingCapital - (_startingCapital * _rebalanceThreshold);
-    public override decimal BrokerTotalValue => _brokerPositions.TotalMarketValue();
-
-
+    public override decimal BrokerTotalValue => _brokerPositions.Sum(p => p.MarketValue);
     public override List<BrokerPosition> BrokerPositions => _brokerPositions;
     public override List<TradeRequest> TradeRequests => _tradeRequests;
     public override async Task Execute()

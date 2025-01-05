@@ -1,12 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using soad_csharp.brokers;
-using soad_csharp.database;
+using soad_csharp.Brokers;
+using soad_csharp.Database;
 using soad_csharp.Extensions;
 using System.Diagnostics;
-using BrokerPosition = soad_csharp.brokers.BrokerPosition;
+using BrokerPosition = soad_csharp.Brokers.BrokerPosition;
 
-namespace soad_csharp.strategies.@abstract;
+namespace soad_csharp.Strategies.Abstract;
 public abstract class SimpleStrategy(ILogger _logger, IBroker _broker, TradeDbContext _dbContext) 
 {
     //    // Abstract properties and methods for derived strategies

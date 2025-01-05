@@ -1,0 +1,14 @@
+﻿brokers:
+  alpaca:
+    api_key: "your_api_key"
+    secret_key: "your_secret_key"
+
+strategies:
+  - type: "constant_percentage"
+    broker: "alpaca"
+    starting_capital: 10000
+    stock_allocations:
+      AAPL: 0.3
+      GOOGL: 0.4
+      MSFT: 0.3
+    rebalance_interval_minutes: 60

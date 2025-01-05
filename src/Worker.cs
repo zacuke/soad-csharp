@@ -2,9 +2,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using soad_csharp.brokers;
-using soad_csharp.database;
-using soad_csharp.strategies;
+using soad_csharp.Brokers;
+using soad_csharp.Database;
+using soad_csharp.Strategies;
 
 namespace soad_csharp;
 
@@ -24,7 +24,14 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuration, TradeD
 
 
     }
-
+    private class StrategyConfig
+    {
+        public string Type { get; set; }
+        public string Broker { get; set; }
+        public decimal StartingCapital { get; set; }
+        public Dictionary<string, decimal> StockAllocations { get; set; }
+        public int RebalanceIntervalMinutes { get; set; }
+    }
     private  async Task TestStrategy()
     {
         var strategyName = "TestStrategy";

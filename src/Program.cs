@@ -5,9 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using soad_csharp;
-using soad_csharp.brokers;
-using soad_csharp.database;
-using soad_csharp.strategies;
+using soad_csharp.Brokers;
+using soad_csharp.Database;
+using soad_csharp.Strategies;
 using System.Diagnostics;
 
 var builder = Host.CreateApplicationBuilder(args);
