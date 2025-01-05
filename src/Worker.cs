@@ -20,7 +20,7 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuration, TradeD
         //   await TestStrategy();
         //await OtherStrategy();
 
-        _timer = new Timer(async state => await OtherStrategy(), null, TimeSpan.Zero, TimeSpan.FromMinutes(5));
+        _timer = new Timer(async state => await OtherStrategy(), null, TimeSpan.Zero, TimeSpan.FromMinutes(60));
 
 
     }
